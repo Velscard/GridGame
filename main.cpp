@@ -5,26 +5,44 @@ using namespace std;
 
 #include <SFML/Graphics.hpp>
 
+
+
 float length(sf::Vector2f vector)
 {
     return std::sqrt(vector.x * vector.x + vector.y * vector.y);
 }
+
+
+
+sf::Vector2f normalize(sf::Vector2f input)
+{
+    return (input / length(input));
+}
+
+
+
 bool collision(sf::CircleShape& circle1, sf::CircleShape& circle2)
 {
     float minDistance = circle1.getRadius() + circle2.getRadius();
-    sf::Vector2f circle1Mid = circle1.getPosition() + sf::Vector2f(circle1.getRadius(),circle1.getRadius());
-    sf::Vector2f circle2Mid = circle2.getPosition() + sf::Vector2f(circle2.getRadius(),circle2.getRadius());
-    float distance = length(circle1Mid - circle2Mid);
+    float distance = length(circle1.getPosition() - circle2.getPosition());
     return (distance < minDistance);
 }
+
+
+
 int main()
 {
     sf::RenderWindow window(sf::VideoMode::getDesktopMode(), "gRID gAME", sf::Style::Fullscreen);
     window.setVerticalSyncEnabled(true);
     sf::CircleShape player(100.f);
+    player.setOrigin(player.getRadius(), player.getRadius());
     sf::CircleShape rock1(100.f);
-    rock1.setPosition(0, 0);
-    player.setPosition(1180, 620);
+    rock1.setOrigin(rock1.getRadius(), rock1.getRadius());
+    rock1.setPosition(100, 100);
+    player.setPosition(1280, 720);
+    sf::RectangleShape jimmy(sf::Vector2f(2560, 1440));
+    jimmy.setPosition(0, 0);
+    jimmy.setFillColor(sf::Color(0, 0, 0, 30));
 
 
 
@@ -44,6 +62,7 @@ int main()
     while (window.isOpen())
     {
         float speed = 10;
+        /*
         if (sf::Keyboard::isKeyPressed(sf::Keyboard::Left))
         {
             player.move(-speed, 0);
@@ -60,11 +79,21 @@ int main()
         {
             player.move(0, speed);
         }
+*/
+        sf::Vector2f kbDirection(
+            float(sf::Keyboard::isKeyPressed(sf::Keyboard::Right)) - float(sf::Keyboard::isKeyPressed(sf::Keyboard::Left)),
+            float(sf::Keyboard::isKeyPressed(sf::Keyboard::Down)) - float(sf::Keyboard::isKeyPressed(sf::Keyboard::Up))
+        );
+        if (length(kbDirection)!=0.0f) player.move(normalize(kbDirection) * speed);
 
 
 
-        if(collision(player, rock1))  player.setFillColor(sf::Color::Red);
-        else                          player.setFillColor(sf::Color::White);
+        if(collision(player, rock1))
+        {
+              player.setFillColor(sf::Color::Red);
+              player.move(normalize(player.getPosition() - rock1.getPosition()) * 10.f);
+        }
+        else player.setFillColor(sf::Color::White);
 
 
 
@@ -76,8 +105,10 @@ int main()
             if ((event.type == sf::Event::KeyPressed) && (event.key.code == sf::Keyboard::Escape))
                 window.close();
         }
+        rock1.rotate(1);
 
-        window.clear();
+        //window.clear();
+        window.draw(jimmy);
         window.draw(rock1);
         window.draw(player);
         window.display();
